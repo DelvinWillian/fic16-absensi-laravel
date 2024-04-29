@@ -18,7 +18,7 @@ class AuthController extends Controller
         $user = User::where('email', $loginData['email'])->first();
 
         //check user exist
-        if($user){
+        if(!$user){
             return response(['message'=>'Invalid credentials'], 401);
         }
         
@@ -26,7 +26,7 @@ class AuthController extends Controller
             return response(['message'=>'Invalid credentials'], 401);
         }
 
-        $token = $user->createToken('auth_token')->plainText();
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response(['user' => $user, 'token' => $token], 200);
 
