@@ -9,27 +9,27 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         $loginData = $request->validate([
-            'email'=>'required|email',
-            'password'=>'required'
+            'email' => 'required|email',
+            'password' => 'required'
         ]);
 
         $user = User::where('email', $loginData['email'])->first();
 
         //check user exist
-        if(!$user){
-            return response(['message'=>'Invalid credentials'], 401);
+        if (!$user) {
+            return response(['message' => 'Invalid credentials'], 401);
         }
-        
-        if(!Hash::check($loginData['password'], $user->password)){
-            return response(['message'=>'Invalid credentials'], 401);
+
+        if (!Hash::check($loginData['password'], $user->password)) {
+            return response(['message' => 'Invalid credentials'], 401);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response(['user' => $user, 'token' => $token], 200);
-
     }
 
     public function logout(Request $request)
@@ -37,5 +37,30 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response(['message' => 'Logged out'], 200);
+    }
+
+
+    //update image profile & face_embedding
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'face_embedding' => 'required',
+        ]);
+
+        $user = $request->user();
+        $image = $request->file('image');
+        $face_embedding = $request->face_embedding;
+
+        //save image
+        $image->storeAs('public/images', $image->hashName());
+        $user->image_url = $image->hashName();
+        $user->face_embedding = $face_embedding;
+        $user->save();
+
+        return response([
+            'message' => 'Profile updated',
+            'user' => $user,
+        ], 200);
     }
 }
